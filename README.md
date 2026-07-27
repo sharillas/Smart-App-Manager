@@ -26,3 +26,14 @@ php artisan make:filament-user
 
 ## Desenvolvido por
 Nelson Teixeira — Smartchoice©2026
+
+---
+
+## 🔗 Ecossistema Smartchoice
+
+| App | URL | Descrição |
+|-----|-----|-----------|
+| **Smart App Manager** | [smartvideo.tech](https://smartvideo.tech) | Gestão de equipamentos AV, orçamentos, logística |
+| **LED Calculator** | [led.smartvideo.tech](https://led.smartvideo.tech) | Calculadora de painéis LED para eventos |
+
+> Ambas as apps partilham o mesmo ecossistema e estão ligadas via menu de navegação.
