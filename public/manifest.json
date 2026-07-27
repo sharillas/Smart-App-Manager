@@ -1,0 +1,22 @@
+{
+    "name": "Smartchoice Event Manager",
+    "short_name": "Smartchoice",
+    "description": "Gestão de eventos e aluguer de equipamentos AV",
+    "start_url": "/admin",
+    "display": "standalone",
+    "background_color": "#1E293B",
+    "theme_color": "#3B82F6",
+    "orientation": "any",
+    "icons": [
+        {
+            "src": "/images/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/images/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

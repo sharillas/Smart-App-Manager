@@ -1,0 +1,65 @@
+/* ============================================ */
+/* SCROLL HORIZONTAL SEMPRE VISÍVEL             */
+/* ============================================ */
+.fi-ta-content,
+.fi-table,
+table {
+    overflow-x: auto !important;
+    max-width: 100% !important;
+    display: block !important;
+}
+
+/* Barra de scroll visível e estilizada */
+.fi-ta-content::-webkit-scrollbar,
+.fi-table::-webkit-scrollbar,
+table::-webkit-scrollbar {
+    height: 10px;
+    width: 10px;
+}
+
+.fi-ta-content::-webkit-scrollbar-track,
+.fi-table::-webkit-scrollbar-track,
+table::-webkit-scrollbar-track {
+    background: #0F172A;
+    border-radius: 6px;
+}
+
+.fi-ta-content::-webkit-scrollbar-thumb,
+.fi-table::-webkit-scrollbar-thumb,
+table::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 6px;
+}
+
+.fi-ta-content::-webkit-scrollbar-thumb:hover,
+.fi-table::-webkit-scrollbar-thumb:hover,
+table::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+}
+
+/* Colunas não quebram */
+.fi-ta-table th,
+.fi-ta-table td,
+.fi-table th,
+.fi-table td {
+    white-space: nowrap !important;
+}
+
+/* Cabeçalho fixo ao scrollar */
+.fi-ta-table thead {
+    position: sticky !important;
+    top: 0;
+    z-index: 10;
+    background: #1E293B;
+}
+
+/* Melhor visualização em mobile */
+@media (max-width: 768px) {
+    .fi-ta-content {
+        font-size: 12px;
+    }
+    .fi-ta-table th,
+    .fi-ta-table td {
+        padding: 6px 8px !important;
+    }
+}

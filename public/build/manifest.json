@@ -1,0 +1,59 @@
+{
+  "_AppLayout-BrcXwIcb.js": {
+    "file": "assets/AppLayout-BrcXwIcb.js",
+    "name": "AppLayout",
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-D0YKsBxx.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "name": "app",
+    "names": [
+      "app.css"
+    ]
+  },
+  "resources/js/Pages/Entidades/Index.vue": {
+    "file": "assets/Index-DcrNeMRV.js",
+    "name": "Index",
+    "src": "resources/js/Pages/Entidades/Index.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_AppLayout-BrcXwIcb.js"
+    ]
+  },
+  "resources/js/Pages/Equipamentos/Index.vue": {
+    "file": "assets/Index-CcM0Kz9v.js",
+    "name": "Index",
+    "src": "resources/js/Pages/Equipamentos/Index.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_AppLayout-BrcXwIcb.js"
+    ]
+  },
+  "resources/js/Pages/Orcamentos/Index.vue": {
+    "file": "assets/Index-D2xDn061.js",
+    "name": "Index",
+    "src": "resources/js/Pages/Orcamentos/Index.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_AppLayout-BrcXwIcb.js"
+    ]
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-CVa3nsCP.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/js/Pages/Entidades/Index.vue",
+      "resources/js/Pages/Equipamentos/Index.vue",
+      "resources/js/Pages/Orcamentos/Index.vue"
+    ]
+  }
+}

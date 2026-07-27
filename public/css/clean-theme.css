@@ -1,0 +1,74 @@
+:root {
+    --primary: #3B82F6;
+    --primary-light: #EFF6FF;
+    --sidebar-bg: #F8FAFC;
+    --text: #1E293B;
+    --text-light: #64748B;
+    --border: #E2E8F0;
+    --card: #FFFFFF;
+}
+
+/* Fundo geral */
+body {
+    background: #F1F5F9 !important;
+}
+
+/* Sidebar */
+.fi-sidebar {
+    background: #FFFFFF !important;
+    border-right: 1px solid #E2E8F0 !important;
+}
+
+/* Top bar */
+.fi-topbar {
+    background: #FFFFFF !important;
+    border-bottom: 1px solid #E2E8F0 !important;
+}
+
+/* Cards */
+.fi-card {
+    border-radius: 12px !important;
+    border: 1px solid #E2E8F0 !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
+}
+
+/* Botões */
+.fi-btn {
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+}
+
+/* Tabelas */
+.fi-ta-table {
+    border-radius: 12px !important;
+}
+
+/* Inputs */
+input, select, textarea {
+    border-radius: 8px !important;
+    border-color: #E2E8F0 !important;
+}
+
+/* Remover ícones do menu */
+.fi-sidebar-item-icon {
+    display: none !important;
+}
+
+/* Logo área */
+.fi-brand {
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    color: #1E293B !important;
+}
+
+/* Login page clean */
+.fi-simple-main {
+    background: #FFFFFF !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06) !important;
+}
+
+/* Dashboard widgets */
+.fi-widget {
+    border-radius: 12px !important;
+}

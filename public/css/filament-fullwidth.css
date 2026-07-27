@@ -1,0 +1,36 @@
+.fi-simple-layout,
+.fi-main,
+.fi-content {
+    max-width: 100% !important;
+}
+
+.fi-ta-content {
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
+.fi-ta-table {
+    width: 100% !important;
+}
+
+.fi-ta-table th,
+.fi-ta-table td {
+    padding: 6px 8px !important;
+    font-size: 11px !important;
+}
+
+.fi-container,
+[class*="max-w-"] {
+    max-width: 100% !important;
+}
+
+/* Forçar alinhamento individual por coluna */
+.fi-ta-table td {
+    text-align: left !important;
+}
+
+/* Exceção: coluna de stock alinhada ao centro */
+.fi-ta-table td:last-child,
+.fi-ta-table th:last-child {
+    text-align: center !important;
+}
