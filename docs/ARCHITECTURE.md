@@ -3,21 +3,21 @@
 ## Visão Geral
 
 ┌─────────────────────────────────────────────────────────┐
-│ SMARTCHOICE ECOSYSTEM │
+│ SMARTCHOICE ECOSYSTEM                                   │
 ├─────────────────────────┬───────────────────────────────┤
-│ Smart App Manager │ LED Calculator │
-│ (smartvideo.tech) │ (led.smartvideo.tech) │
+│ Smart App Manager       │ LED Calculator                │
+│ (smartvideo.tech)       │ (led.smartvideo.tech)         │
 ├─────────────────────────┼───────────────────────────────┤
-│ Laravel 11 + Filament │ App independente │
-│ SQLite │ │
-│ Gestão AV Completa │ Cálculo de painéis LED │
-│ - Equipamentos │ - Dimensões │
-│ - Orçamentos │ - Resoluções │
-│ - Colaboradores │ - Quantidade de módulos │
-│ - Reparações │ - Peso e potência │
-│ - Guias Transporte │ │
-│ - QR Codes │ │
-│ - PWA │ │
+│ Laravel 11 + Filament   │ App independente              │
+│ SQLite                  │                               │
+│ Gestão AV Completa      │ Cálculo de painéis LED        │
+│ - Equipamentos          │ - Dimensões                   │
+│ - Orçamentos            │ - Resoluções                  │
+│ - Colaboradores         │ - Quantidade de módulos       │
+│ - Reparações            │ - Peso e potência             │
+│ - Guias Transporte      │                               │
+│ - QR Codes              │                               │
+│ - PWA                   │                               │
 └─────────────────────────┴───────────────────────────────┘
 
 ## Ligações
