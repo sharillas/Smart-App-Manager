@@ -16,7 +16,7 @@ Sistema de Gestão de Aluguer de Equipamentos AV para Eventos
 - 5 níveis de permissões
 
 ## Instalação
-git clone https://github.com/Sharillas/smartchoice-event-manager.git
+git clone https://github.com/sharillas/Smart-App-Manager.git
 cd smartchoice-event-manager
 composer install
 cp .env.example .env
