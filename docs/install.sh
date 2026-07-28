@@ -1,14 +1,12 @@
 #!/bin/bash
 # =============================================
-# SMARTCHOICE EVENT MANAGER v5.0 - FINAL LIMPO
-# Ubuntu 22.04/24.04 + PHP 8.2/8.3 + SQLite
+# SMARTCHOICE EVENT MANAGER v5.0 - DEFINITIVO
 # =============================================
 set -e
 clear
 cat << "BANNER"
 ╔══════════════════════════════════════════════╗
 ║  🎪 SMARTCHOICE EVENT MANAGER v5.0          ║
-║  Instalação Completa - Versão Final         ║
 ╚══════════════════════════════════════════════╝
 BANNER
 
@@ -16,13 +14,12 @@ source /etc/os-release
 PHP_VERSION="8.2"; [ "$VERSION_ID" = "24.04" ] && PHP_VERSION="8.3"
 PHP_SOCK="/var/run/php/php${PHP_VERSION}-fpm.sock"
 IP=$(hostname -I | awk '{print $1}')
-ADMIN_EMAIL="admin@admin.com"
-ADMIN_PASS="Admin123!"
 echo "📋 Ubuntu ${VERSION_ID} → PHP ${PHP_VERSION} | IP: ${IP}"
 sleep 2
-# =============================================
+
+# ═══════════════════════════════════════
 # 1. SISTEMA + PHP + COMPOSER
-# =============================================
+# ═══════════════════════════════════════
 echo "[1/8] Sistema + PHP + Composer"
 apt update -y -qq && apt upgrade -y -qq
 apt install -y -qq curl wget git unzip zip cron ufw nginx
@@ -39,10 +36,10 @@ php composer-setup.php --install-dir=/usr/local/bin --filename=composer --quiet
 php -r "unlink('composer-setup.php');"
 echo "✅"
 
-# =============================================
+# ═══════════════════════════════════════
 # 2. LARAVEL + FILAMENT
-# =============================================
-echo "[2/8] Laravel + Filament + Dependências"
+# ═══════════════════════════════════════
+echo "[2/8] Laravel + Filament"
 cd /var/www && rm -rf gestao-eventos 2>/dev/null
 composer create-project laravel/laravel gestao-eventos --no-interaction --prefer-dist --quiet
 cd gestao-eventos
@@ -66,10 +63,11 @@ composer require smalot/pdfparser --no-interaction --quiet
 composer require maatwebsite/excel --no-interaction --quiet
 php artisan filament:install --panels --no-interaction --quiet
 echo "✅"
-# =============================================
+
+# ═══════════════════════════════════════
 # 3. BASE DE DADOS
-# =============================================
-echo "[3/8] Base de dados (20 tabelas)"
+# ═══════════════════════════════════════
+echo "[3/8] Base de dados"
 rm -f database/database.sqlite && touch database/database.sqlite
 php artisan tinker --execute="
 Schema::create('users',function(\$t){\$t->id();\$t->string('name');\$t->string('email')->unique();\$t->timestamp('email_verified_at')->nullable();\$t->string('password');\$t->string('role')->default('visualizador');\$t->rememberToken();\$t->timestamps();});
@@ -94,12 +92,12 @@ Schema::create('escalas_tecnicos',function(\$t){\$t->id();\$t->foreignId('colabo
 echo 'OK';
 " --quiet
 echo "✅"
-# =============================================
+
+# ═══════════════════════════════════════
 # 4. MODELOS + ADMIN + OBSERVER
-# =============================================
+# ═══════════════════════════════════════
 echo "[4/8] Modelos + Admin + Observer"
 
-# User
 cat > app/Models/User.php << 'EOF'
 <?php
 namespace App\Models;
@@ -115,7 +113,6 @@ public function isTecnico():bool{return $this->role==='tecnico';}
 public function isVisualizador():bool{return $this->role==='visualizador';}}
 EOF
 
-# Modelos base
 for m in "Categoria:categorias:nome,parent_id,descricao,ordem" "Equipamento:equipamentos:nome,marca,modelo,categoria_id,estado,quantidade,preco_aluguer_dia,preco_custo,armazem,notas" "NumeroSerie:numeros_serie:equipamento_id,numero_serie,qr_code,estado" "Orcamento:orcamentos:numero,cliente_nome,cliente_email,cliente_telefone,evento_nome,evento_local,data_inicio,data_fim,estado,valor_total,notas" "OrcamentoItem:orcamento_itens:orcamento_id,equipamento_id,quantidade,preco_unitario,dias,subtotal,subaluguer,fornecedor,custo_subaluguer" "GuiaTransporte:guia_transportes:numero,orcamento_id,tipo,estado,responsavel,observacoes" "GuiaItem:guia_itens:guia_transporte_id,equipamento_id,quantidade,notas" "Reparacao:reparacoes:equipamento_id,descricao_avaria,estado,tecnico,custo_reparacao,data_entrada,data_saida,notas_tecnicas" "Colaborador:colaboradores:nome,morada,bi_passaporte,funcao,competencias,idade,epis,dados_adicionais" "Entidade:entidades:nome,designacao_comercial,tipo_entidade,nif,pais,email,telefone,morada,notas,ativo" "Funcao:funcoes:nome,departamento_id,descricao,ativo" "EscalaTecnico:escalas_tecnicos:colaborador_id,orcamento_id,data_inicio,data_fim,hora_entrada,hora_saida,funcao,notas"; do
   IFS=':' read -r name table fields <<< "$m"
   fills="'${fields//,/\',\'}'"
@@ -127,7 +124,6 @@ class ${name} extends Model{protected \$table='${table}';protected \$fillable=[$
 MODELEOF
 done
 
-# Relações
 cat > app/Models/Categoria.php << 'EOF'
 <?php namespace App\Models;use Illuminate\Database\Eloquent\Model;class Categoria extends Model{protected $table='categorias';protected $fillable=['nome','parent_id','descricao','ordem'];public function parent(){return $this->belongsTo(Categoria::class,'parent_id');}public function children(){return $this->hasMany(Categoria::class,'parent_id');}public function equipamentos(){return $this->hasMany(Equipamento::class,'categoria_id');}}
 EOF
@@ -147,7 +143,6 @@ cat > app/Models/EscalaTecnico.php << 'EOF'
 <?php namespace App\Models;use Illuminate\Database\Eloquent\Model;class EscalaTecnico extends Model{protected $table='escalas_tecnicos';protected $fillable=['colaborador_id','orcamento_id','data_inicio','data_fim','hora_entrada','hora_saida','funcao','notas'];public function colaborador(){return $this->belongsTo(Colaborador::class);}public function orcamento(){return $this->belongsTo(Orcamento::class);}}
 EOF
 
-# Observer
 mkdir -p app/Observers
 cat > app/Observers/OrcamentoObserver.php << 'EOF'
 <?php namespace App\Observers;use App\Models\Orcamento;use App\Models\Equipamento;use Illuminate\Support\Facades\DB;
@@ -159,23 +154,22 @@ cat > app/Providers/AppServiceProvider.php << 'EOF'
 <?php namespace App\Providers;use Illuminate\Support\ServiceProvider;use App\Models\Orcamento;use App\Observers\OrcamentoObserver;class AppServiceProvider extends ServiceProvider{public function boot():void{Orcamento::observe(OrcamentoObserver::class);}}
 EOF
 
-# Admin
-php artisan tinker --execute="App\Models\User::create(['name'=>'Administrador','email'=>'${ADMIN_EMAIL}','password'=>bcrypt('${ADMIN_PASS}'),'role'=>'admin','email_verified_at'=>now()]);" --quiet
+php artisan tinker --execute="App\Models\User::create(['name'=>'Administrador','email'=>'admin@admin.com','password'=>bcrypt('Admin123!'),'role'=>'admin','email_verified_at'=>now()]);" --quiet
 echo "✅"
-# =============================================
-# 5. RESOURCES (COM NOMES CORRETOS)
-# =============================================
-echo "[5/8] Resources + Dashboard + Escala"
 
-# Gerar Resources base
+# ═══════════════════════════════════════
+# 5. RESOURCES (GERADOS JÁ COM NOMES CORRETOS)
+# ═══════════════════════════════════════
+echo "[5/8] Resources (com nomes corretos)"
+
+# Gerar Resources
 for r in Categoria Equipamento Orcamento GuiaTransporte Reparacao Colaborador Entidade Funcao User; do
     php artisan make:filament-resource $r --generate --no-interaction --quiet
 done
 
-# CORRIGIR NOMES - Substituir a linha do navigationIcon em cada ficheiro
-# Usamos um script PHP inline para evitar problemas com sed
+# Corrigir nomes e grupos - usando PHP para garantir que não há duplicações
 php artisan tinker --execute="
-\$files = [
+\$resources = [
     'CategoriaResource' => ['label' => 'Departamentos', 'plural' => 'Departamentos', 'group' => 'Logística'],
     'EquipamentoResource' => ['label' => 'Equipamentos', 'plural' => 'Equipamentos', 'group' => 'Logística'],
     'OrcamentoResource' => ['label' => 'Orçamentos', 'plural' => 'Orçamentos', 'group' => 'Comercial'],
@@ -186,7 +180,7 @@ php artisan tinker --execute="
     'FuncaoResource' => ['label' => 'Funções', 'plural' => 'Funções', 'group' => 'Administração'],
     'UserResource' => ['label' => 'Utilizadores', 'plural' => 'Utilizadores', 'group' => 'Administração'],
 ];
-foreach(\$files as \$file => \$data){
+foreach(\$resources as \$file => \$data) {
     \$path = 'app/Filament/Resources/'.\$file.'.php';
     \$content = file_get_contents(\$path);
     \$search = \"protected static ?string \$navigationIcon = 'heroicon-o-rectangle-stack';\";
@@ -196,13 +190,12 @@ foreach(\$files as \$file => \$data){
 }
 echo 'OK';
 " --quiet
-
 echo "✅"
-# =============================================
-# 6. DASHBOARD + WIDGETS + ESCALA + VIEWS
-# =============================================
-echo "[6/8] Dashboard + Widgets + Escala + Views"
 
+# ═══════════════════════════════════════
+# 6. DASHBOARD + WIDGETS + ESCALA + VIEWS
+# ═══════════════════════════════════════
+echo "[6/8] Dashboard + Widgets + Escala + Views"
 mkdir -p app/Filament/Pages app/Filament/Widgets resources/views/filament/widgets resources/views/filament/pages resources/views/components
 
 # Dashboard
@@ -229,34 +222,6 @@ EOF
 cat > app/Filament/Widgets/CalendarioMensal.php << 'EOF'
 <?php namespace App\Filament\Widgets;use App\Models\Orcamento;use Filament\Widgets\Widget;use Carbon\Carbon;class CalendarioMensal extends Widget{protected static string $view='filament.widgets.calendario-mensal';protected int|string|array $columnSpan='full';public $mesAtual;public $anoAtual;public function mount(){$this->mesAtual=Carbon::now()->month;$this->anoAtual=Carbon::now()->year;}public function mesAnterior(){if($this->mesAtual==1){$this->mesAtual=12;$this->anoAtual--;}else{$this->mesAtual--;}}public function mesSeguinte(){if($this->mesAtual==12){$this->mesAtual=1;$this->anoAtual++;}else{$this->mesAtual++;}}public function getDiasDoMes(){$im=Carbon::create($this->anoAtual,$this->mesAtual,1);$fm=$im->copy()->endOfMonth();$dias=[];$da=$im->copy()->startOfWeek(Carbon::MONDAY);for($i=0;$i<42;$i++){$dias[]=['data'=>$da->format('Y-m-d'),'dia'=>$da->day,'mes_atual'=>$da->month==$this->mesAtual,'hoje'=>$da->isToday(),'fim_semana'=>$da->isWeekend(),'eventos'=>[]];$da->addDay();}$evs=Orcamento::with('itens.equipamento')->whereIn('estado',['draft','orcamentacao','confirmado'])->where(function($q)use($im,$fm){$q->whereBetween('data_inicio',[$im,$fm])->orWhereBetween('data_fim',[$im,$fm])->orWhere(function($q2)use($im,$fm){$q2->where('data_inicio','<=',$im)->where('data_fim','>=',$fm);});})->orderBy('data_inicio')->get();foreach($dias as &$dia){foreach($evs as $ev){$ini=Carbon::parse($ev->data_inicio);$fim=Carbon::parse($ev->data_fim);if(Carbon::parse($dia['data'])->between($ini,$fim)){$cor=match($ev->estado){'confirmado'=>'#10B981','orcamentacao'=>'#F59E0B','draft'=>'#3B82F6',default=>'#6B7280'};$dia['eventos'][]=['id'=>$ev->id,'numero'=>$ev->numero,'cliente'=>$ev->cliente_nome,'evento'=>$ev->evento_nome,'local'=>$ev->evento_local,'estado'=>$ev->estado,'cor'=>$cor,'inicio'=>$ev->data_inicio,'fim'=>$ev->data_fim,'total_equipamentos'=>$ev->itens->sum('quantidade')];}}}return $dias;}public function getNomeMes():string{$meses=['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];return $meses[$this->mesAtual].' '.$this->anoAtual;}}
 EOF
-
-echo "✅"
-# =============================================
-# 7. VIEWS (Alertas + Calendários + Escala + Footer)
-# =============================================
-echo "[7/8] Views"
-
-cat > resources/views/filament/widgets/alertas-conflitos.blade.php << 'EOF'
-<div>@php $c=$this->getConflitos();@endphp@if(count($c)>0)<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:16px;padding:20px 24px;margin-bottom:16px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><span style="font-size:20px;">⚠️</span><h3 style="margin:0;font-size:16px;font-weight:700;color:#991B1B;">Alertas de Conflito</h3><span style="background:#DC2626;color:white;padding:2px 10px;border-radius:10px;font-size:12px;">{{count($c)}}</span></div>@foreach($c as $x)<div style="background:white;padding:10px 14px;border-radius:10px;border:1px solid #FECACA;font-size:12px;margin-bottom:8px;"><div style="color:#991B1B;font-weight:600;">{{$x['o1']}} ↔ {{$x['o2']}}</div><div style="color:#64748B;margin-top:2px;">📅 {{$x['p']}} · 🔧 {{$x['e']}} equip.</div></div>@endforeach</div>@endif</div>
-EOF
-
-cat > resources/views/filament/widgets/calendario-eventos.blade.php << 'EOF'
-<div style="background:#1E293B;border-radius:16px;padding:16px;border:1px solid #334155;overflow-x:auto;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><div><h2 style="font-size:18px;font-weight:700;color:#F1F5F9;margin:0;">Agenda Semanal</h2><p style="font-size:12px;color:#94A3B8;">{{\Carbon\Carbon::now()->startOfWeek(\Carbon\Carbon::MONDAY)->format('d M')}} → {{\Carbon\Carbon::now()->endOfWeek(\Carbon\Carbon::SUNDAY)->format('d M Y')}}</p></div></div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px;">@foreach($this->getSemanaAtual() as $d)@php $bg=$d['hoje']?'#3B82F6':'#334155';$tc=$d['hoje']?'white':'#E2E8F0';@endphp<div style="padding:8px 4px;text-align:center;border-radius:8px;font-weight:600;font-size:11px;background:{{$bg}};color:{{$tc}};"><div style="font-size:9px;">{{substr($d['nome'],0,3)}}</div><div style="font-size:16px;font-weight:700;">{{$d['dia']}}</div></div>@endforeach</div><div style="position:relative;min-height:100px;"><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">@for($i=0;$i<7;$i++)<div style="background:{{($this->getDiaAtual()==$i+1)?'#1E3A5F':'#0F172A'}};min-height:90px;border-radius:8px;border:1px solid #334155;"></div>@endfor</div><div style="position:absolute;top:4px;left:2px;right:2px;">@foreach($this->getOrcamentos() as $e)@php $l=$e->duracao*100/7;$esq=($e->coluna_inicio-1)*100/7;@endphp<div style="margin-bottom:3px;height:28px;position:relative;"><div style="position:absolute;left:{{$esq}}%;width:{{$l}}%;min-width:40px;background:{{$e->cor}};color:white;padding:4px 6px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">{{$e->numero}} | {{$e->cliente}}</div></div>@endforeach</div></div></div>
-EOF
-
-cat > resources/views/filament/widgets/calendario-mensal.blade.php << 'EOF'
-<div style="background:#1E293B;border-radius:16px;padding:16px;border:1px solid #334155;overflow-x:auto;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><div style="display:flex;align-items:center;gap:8px;"><button wire:click="mesAnterior" style="background:#334155;color:#E2E8F0;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;">←</button><h2 style="color:#F1F5F9;font-size:16px;font-weight:700;margin:0;">{{$this->getNomeMes()}}</h2><button wire:click="mesSeguinte" style="background:#334155;color:#E2E8F0;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;">→</button></div></div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:2px;">@foreach(['S','T','Q','Q','S','S','D'] as $dia)<div style="padding:4px;text-align:center;color:#94A3B8;font-size:9px;font-weight:600;">{{$dia}}</div>@endforeach</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;">@foreach($this->getDiasDoMes() as $dia)@php $bg='#0F172A';$border='1px solid #1E293B';if($dia['hoje']){$bg='#1E3A5F';$border='2px solid #3B82F6';}if(!$dia['mes_atual']){$bg='#0a0f1a';}@endphp<div style="background:{{$bg}};border:{{$border}};border-radius:6px;padding:3px;min-height:50px;{{!$dia['mes_atual']?'opacity:0.4;':''}}"><div style="color:{{$dia['hoje']?'white':'#94A3B8'}};font-size:9px;font-weight:{{$dia['hoje']?'700':'400'}};margin-bottom:2px;">{{$dia['dia']}}</div>@foreach($dia['eventos'] as $ev)<div style="background:{{$ev['cor']}};color:white;padding:1px 3px;border-radius:3px;font-size:7px;font-weight:600;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;margin-bottom:1px;">{{$ev['cliente']}}</div>@endforeach</div>@endforeach</div></div>
-EOF
-
-cat > resources/views/components/footer.blade.php << 'EOF'
-<div style="position:fixed;bottom:0;left:0;right:0;background:#0F172A;border-top:1px solid #1E293B;padding:8px 24px;display:flex;justify-content:space-between;align-items:center;z-index:50;font-size:11px;"><span style="color:#64748B;">Smartchoice©2026 - All rights reserved</span><span style="color:#475569;font-size:10px;">App SmartManager v1.0.72026 by Nelson Teixeira</span></div><style>.fi-main{padding-bottom:40px!important;}</style>
-EOF
-
-echo "✅"
-# =============================================
-# 8. ESCALA + PROVIDER + NGINX + ASSETS + FINAL
-# =============================================
-echo "[8/8] Escala + Provider + Nginx + Assets + Final"
 
 # Escala Técnicos
 cat > app/Filament/Pages/EscalaTecnicos.php << 'EOF'
@@ -285,142 +250,52 @@ class EscalaTecnicos extends Page
     public $tecnicoSelecionado = null;
     public $mostrarModal = false;
     
-    public function mount()
-    {
-        $this->semanaInicio = Carbon::now()->startOfWeek(Carbon::MONDAY)->format('Y-m-d');
-        $this->carregar();
-    }
+    public function mount(){ $this->semanaInicio = Carbon::now()->startOfWeek(Carbon::MONDAY)->format('Y-m-d'); $this->carregar(); }
+    public function semanaAnterior(){ $this->semanaInicio = Carbon::parse($this->semanaInicio)->subWeek()->format('Y-m-d'); $this->carregar(); }
+    public function semanaSeguinte(){ $this->semanaInicio = Carbon::parse($this->semanaInicio)->addWeek()->format('Y-m-d'); $this->carregar(); }
     
-    public function semanaAnterior()
-    {
-        $this->semanaInicio = Carbon::parse($this->semanaInicio)->subWeek()->format('Y-m-d');
-        $this->carregar();
-    }
-    
-    public function semanaSeguinte()
-    {
-        $this->semanaInicio = Carbon::parse($this->semanaInicio)->addWeek()->format('Y-m-d');
-        $this->carregar();
-    }
-    
-    public function carregar()
-    {
-        $i = Carbon::parse($this->semanaInicio);
-        $f = $i->copy()->addDays(6);
-        
+    public function carregar(){
+        $i = Carbon::parse($this->semanaInicio); $f = $i->copy()->addDays(6);
         $this->tecnicos = Colaborador::orderBy('nome')->get()->toArray();
-        
-        $this->eventos = Orcamento::whereIn('estado', ['confirmado', 'orcamentacao', 'draft'])
-            ->where(function($q) use ($i, $f) {
-                $q->whereBetween('data_inicio', [$i, $f])
-                  ->orWhereBetween('data_fim', [$i, $f])
-                  ->orWhere(function($q2) use ($i, $f) {
-                      $q2->where('data_inicio', '<=', $i)->where('data_fim', '>=', $f);
-                  });
-            })
-            ->orderBy('data_inicio')
-            ->get()
-            ->toArray();
-        
-        $es = EscalaTecnico::with('colaborador', 'orcamento')
-            ->where(function($q) use ($i, $f) {
-                $q->whereBetween('data_inicio', [$i, $f])
-                  ->orWhereBetween('data_fim', [$i, $f]);
-            })
-            ->get();
-        
+        $this->eventos = Orcamento::whereIn('estado',['confirmado','orcamentacao','draft'])->where(function($q)use($i,$f){$q->whereBetween('data_inicio',[$i,$f])->orWhereBetween('data_fim',[$i,$f])->orWhere(function($q2)use($i,$f){$q2->where('data_inicio','<=',$i)->where('data_fim','>=',$f);});})->orderBy('data_inicio')->get()->toArray();
+        $es = EscalaTecnico::with('colaborador','orcamento')->where(function($q)use($i,$f){$q->whereBetween('data_inicio',[$i,$f])->orWhereBetween('data_fim',[$i,$f]);})->get();
         $this->escalasData = [];
-        foreach ($es as $e) {
-            $cid = $e->colaborador_id;
-            if (!isset($this->escalasData[$cid])) {
-                $this->escalasData[$cid] = [];
-            }
-            $this->escalasData[$cid][] = [
-                'id' => $e->id,
-                'colaborador_id' => $e->colaborador_id,
-                'orcamento_id' => $e->orcamento_id,
-                'data_inicio' => $e->data_inicio,
-                'data_fim' => $e->data_fim,
-                'orcamento_numero' => $e->orcamento->numero ?? '',
-                'orcamento_cliente' => $e->orcamento->cliente_nome ?? '',
-            ];
-        }
+        foreach($es as $e){ $cid=$e->colaborador_id; if(!isset($this->escalasData[$cid]))$this->escalasData[$cid]=[]; $this->escalasData[$cid][]=['id'=>$e->id,'colaborador_id'=>$e->colaborador_id,'orcamento_id'=>$e->orcamento_id,'data_inicio'=>$e->data_inicio,'data_fim'=>$e->data_fim,'orcamento_numero'=>$e->orcamento->numero??'','orcamento_cliente'=>$e->orcamento->cliente_nome??'']; }
     }
     
-    public function abrirModal($tid)
-    {
-        $this->tecnicoSelecionado = $tid;
-        $this->mostrarModal = true;
+    public function abrirModal($tid){ $this->tecnicoSelecionado=$tid; $this->mostrarModal=true; }
+    public function fecharModal(){ $this->mostrarModal=false; }
+    
+    public function alocarTecnico($cid,$oid){
+        $c=Colaborador::find($cid); $o=Orcamento::find($oid); if(!$c||!$o)return;
+        if(EscalaTecnico::where('colaborador_id',$cid)->where(function($q)use($o){$q->whereBetween('data_inicio',[$o->data_inicio,$o->data_fim])->orWhereBetween('data_fim',[$o->data_inicio,$o->data_fim]);})->exists()){ Notification::make()->title('Conflito')->body($c->nome.' já está alocado.')->warning()->send(); return; }
+        EscalaTecnico::create(['colaborador_id'=>$cid,'orcamento_id'=>$oid,'data_inicio'=>$o->data_inicio,'data_fim'=>$o->data_fim,'funcao'=>$c->funcao]);
+        $this->mostrarModal=false; Notification::make()->title('Alocado')->body($c->nome.' → '.$o->numero)->success()->send(); $this->carregar();
     }
     
-    public function fecharModal()
-    {
-        $this->mostrarModal = false;
-    }
-    
-    public function alocarTecnico($cid, $oid)
-    {
-        $c = Colaborador::find($cid);
-        $o = Orcamento::find($oid);
-        
-        if (!$c || !$o) return;
-        
-        $conflito = EscalaTecnico::where('colaborador_id', $cid)
-            ->where(function($q) use ($o) {
-                $q->whereBetween('data_inicio', [$o->data_inicio, $o->data_fim])
-                  ->orWhereBetween('data_fim', [$o->data_inicio, $o->data_fim]);
-            })
-            ->exists();
-        
-        if ($conflito) {
-            Notification::make()->title('Conflito')->body($c->nome . ' já está alocado neste período.')->warning()->send();
-            return;
-        }
-        
-        EscalaTecnico::create([
-            'colaborador_id' => $cid,
-            'orcamento_id' => $oid,
-            'data_inicio' => $o->data_inicio,
-            'data_fim' => $o->data_fim,
-            'funcao' => $c->funcao,
-        ]);
-        
-        $this->mostrarModal = false;
-        Notification::make()->title('Alocado')->body($c->nome . ' → ' . $o->numero)->success()->send();
-        $this->carregar();
-    }
-    
-    public function removerAlocacao($eid)
-    {
-        EscalaTecnico::find($eid)?->delete();
-        Notification::make()->title('Removido')->success()->send();
-        $this->carregar();
-    }
-    
-    public function getDiasSemana()
-    {
-        $d = [];
-        $i = Carbon::parse($this->semanaInicio);
-        for ($x = 0; $x < 7; $x++) {
-            $d[] = $i->copy()->addDays($x);
-        }
-        return $d;
-    }
-    
-    public function temEscala($tid, $data)
-    {
-        if (!isset($this->escalasData[$tid])) return null;
-        foreach ($this->escalasData[$tid] as $e) {
-            if (Carbon::parse($data)->between(Carbon::parse($e['data_inicio']), Carbon::parse($e['data_fim']))) {
-                return $e;
-            }
-        }
-        return null;
-    }
+    public function removerAlocacao($eid){ EscalaTecnico::find($eid)?->delete(); Notification::make()->title('Removido')->success()->send(); $this->carregar(); }
+    public function getDiasSemana(){ $d=[]; $i=Carbon::parse($this->semanaInicio); for($x=0;$x<7;$x++){$d[]=$i->copy()->addDays($x);} return $d; }
+    public function temEscala($tid,$data){ if(!isset($this->escalasData[$tid]))return null; foreach($this->escalasData[$tid] as $e){ if(Carbon::parse($data)->between(Carbon::parse($e['data_inicio']),Carbon::parse($e['data_fim'])))return $e; } return null; }
 }
 EOF
 
-# View Escala
+# Views
+cat > resources/views/filament/widgets/alertas-conflitos.blade.php << 'EOF'
+<div>@php $c=$this->getConflitos();@endphp@if(count($c)>0)<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:16px;padding:20px 24px;margin-bottom:16px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><span style="font-size:20px;">⚠️</span><h3 style="margin:0;font-size:16px;font-weight:700;color:#991B1B;">Alertas de Conflito</h3><span style="background:#DC2626;color:white;padding:2px 10px;border-radius:10px;font-size:12px;">{{count($c)}}</span></div>@foreach($c as $x)<div style="background:white;padding:10px 14px;border-radius:10px;border:1px solid #FECACA;font-size:12px;margin-bottom:8px;"><div style="color:#991B1B;font-weight:600;">{{$x['o1']}} ↔ {{$x['o2']}}</div><div style="color:#64748B;margin-top:2px;">📅 {{$x['p']}} · 🔧 {{$x['e']}} equip.</div></div>@endforeach</div>@endif</div>
+EOF
+
+cat > resources/views/filament/widgets/calendario-eventos.blade.php << 'EOF'
+<div style="background:#1E293B;border-radius:16px;padding:16px;border:1px solid #334155;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><div><h2 style="font-size:18px;font-weight:700;color:#F1F5F9;margin:0;">Agenda Semanal</h2><p style="font-size:12px;color:#94A3B8;">{{\Carbon\Carbon::now()->startOfWeek(\Carbon\Carbon::MONDAY)->format('d M')}} → {{\Carbon\Carbon::now()->endOfWeek(\Carbon\Carbon::SUNDAY)->format('d M Y')}}</p></div></div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px;">@foreach($this->getSemanaAtual() as $d)@php $bg=$d['hoje']?'#3B82F6':'#334155';@endphp<div style="padding:8px 4px;text-align:center;border-radius:8px;font-weight:600;font-size:11px;background:{{$bg}};color:{{$d['hoje']?'white':'#E2E8F0'}};"><div style="font-size:9px;">{{substr($d['nome'],0,3)}}</div><div style="font-size:16px;font-weight:700;">{{$d['dia']}}</div></div>@endforeach</div><div style="position:relative;min-height:100px;"><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">@for($i=0;$i<7;$i++)<div style="background:{{($this->getDiaAtual()==$i+1)?'#1E3A5F':'#0F172A'}};min-height:90px;border-radius:8px;border:1px solid #334155;"></div>@endfor</div><div style="position:absolute;top:4px;left:2px;right:2px;">@foreach($this->getOrcamentos() as $e)@php $l=$e->duracao*100/7;$esq=($e->coluna_inicio-1)*100/7;@endphp<div style="margin-bottom:3px;height:28px;"><div style="position:absolute;left:{{$esq}}%;width:{{$l}}%;min-width:40px;background:{{$e->cor}};color:white;padding:4px 6px;border-radius:6px;font-size:10px;font-weight:600;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">{{$e->numero}} | {{$e->cliente}}</div></div>@endforeach</div></div></div>
+EOF
+
+cat > resources/views/filament/widgets/calendario-mensal.blade.php << 'EOF'
+<div style="background:#1E293B;border-radius:16px;padding:16px;border:1px solid #334155;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><div style="display:flex;align-items:center;gap:8px;"><button wire:click="mesAnterior" style="background:#334155;color:#E2E8F0;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;">←</button><h2 style="color:#F1F5F9;font-size:16px;font-weight:700;margin:0;">{{$this->getNomeMes()}}</h2><button wire:click="mesSeguinte" style="background:#334155;color:#E2E8F0;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;">→</button></div></div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:2px;">@foreach(['S','T','Q','Q','S','S','D'] as $dia)<div style="padding:4px;text-align:center;color:#94A3B8;font-size:9px;">{{$dia}}</div>@endforeach</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;">@foreach($this->getDiasDoMes() as $dia)@php $bg='#0F172A';if($dia['hoje'])$bg='#1E3A5F';if(!$dia['mes_atual'])$bg='#0a0f1a';@endphp<div style="background:{{$bg}};border-radius:6px;padding:3px;min-height:50px;{{!$dia['mes_atual']?'opacity:0.4;':''}}"><div style="color:{{$dia['hoje']?'white':'#94A3B8'}};font-size:9px;margin-bottom:2px;">{{$dia['dia']}}</div>@foreach($dia['eventos'] as $ev)<div style="background:{{$ev['cor']}};color:white;padding:1px 3px;border-radius:3px;font-size:7px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;margin-bottom:1px;">{{$ev['cliente']}}</div>@endforeach</div>@endforeach</div></div>
+EOF
+
+cat > resources/views/components/footer.blade.php << 'EOF'
+<div style="position:fixed;bottom:0;left:0;right:0;background:#0F172A;border-top:1px solid #1E293B;padding:8px 24px;display:flex;justify-content:space-between;align-items:center;z-index:50;font-size:11px;"><span style="color:#64748B;">Smartchoice©2026 - All rights reserved</span><span style="color:#475569;font-size:10px;">App SmartManager v1.0.72026 by Nelson Teixeira</span></div><style>.fi-main{padding-bottom:40px!important;}</style>
+EOF
+
 cat > resources/views/filament/pages/escala-tecnicos.blade.php << 'EOF'
 <x-filament-panels::page>
 <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
@@ -431,12 +306,17 @@ cat > resources/views/filament/pages/escala-tecnicos.blade.php << 'EOF'
 </x-filament-panels::page>
 EOF
 
-# Provider
+echo "✅"
+
+# ═══════════════════════════════════════
+# 7. PROVIDER + NGINX + ASSETS
+# ═══════════════════════════════════════
+echo "[7/8] Provider + Nginx + Assets"
+
 cat > app/Providers/Filament/AdminPanelProvider.php << 'EOF'
 <?php namespace App\Providers\Filament;use Filament\Http\Middleware\Authenticate;use Filament\Http\Middleware\AuthenticateSession;use Filament\Http\Middleware\DisableBladeIconComponents;use Filament\Http\Middleware\DispatchServingFilamentEvent;use Filament\Navigation\NavigationItem;use Filament\Panel;use Filament\PanelProvider;use Filament\Support\Colors\Color;use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;use Illuminate\Cookie\Middleware\EncryptCookies;use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;use Illuminate\Routing\Middleware\SubstituteBindings;use Illuminate\Session\Middleware\StartSession;use Illuminate\View\Middleware\ShareErrorsFromSession;class AdminPanelProvider extends PanelProvider{public function panel(Panel $panel):Panel{return $panel->default()->id('admin')->path('admin')->login()->brandName('Smartchoice Event Manager')->brandLogo(asset('images/logo1.svg'))->colors(['primary'=>Color::Blue,'gray'=>Color::Slate])->font('Inter')->maxContentWidth('full')->topNavigation()->navigationItems([NavigationItem::make('LED Calculator')->url('/led')->icon('heroicon-o-calculator')->group('Comercial')->openUrlInNewTab()->sort(3)])->discoverResources(in:app_path('Filament/Resources'),for:'App\\Filament\\Resources')->discoverPages(in:app_path('Filament/Pages'),for:'App\\Filament\\Pages')->pages([\App\Filament\Pages\Dashboard::class,\App\Filament\Pages\EscalaTecnicos::class])->discoverWidgets(in:app_path('Filament/Widgets'),for:'App\\Filament\\Widgets')->middleware([EncryptCookies::class,AddQueuedCookiesToResponse::class,StartSession::class,AuthenticateSession::class,ShareErrorsFromSession::class,VerifyCsrfToken::class,SubstituteBindings::class,DisableBladeIconComponents::class,DispatchServingFilamentEvent::class])->authMiddleware([Authenticate::class])->renderHook('panels::body.end',fn()=>view('components.footer'));}}
 EOF
 
-# Nginx
 cat > /etc/nginx/sites-available/gestao-eventos << NGXEOF
 server {
     listen 80;
@@ -454,13 +334,17 @@ ln -sf /etc/nginx/sites-available/gestao-eventos /etc/nginx/sites-enabled/ 2>/de
 rm -f /etc/nginx/sites-enabled/default 2>/dev/null
 nginx -t && systemctl restart nginx
 
-# Assets
 mkdir -p public/images
 cat > public/images/logo1.svg << 'SVGEOF'
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 636 637"><defs><style>.c1,.c3{fill:none;stroke:#fff;stroke-miterlimit:10;stroke-width:6}.c2{fill:#fff}</style></defs><path class="c1" d="M369 395h-243c-11 0-18-10-14-22L187 133a34 34 0 0 1 19-20v0a443 443 0 0 0-17 46c-35 111-12 166 69 166h96q38 0 22 53a134 134 0 0 1-7 17"/><path class="c1" d="M473 276q-8-65-84-65H294q-38 0-22-52Q284 122 306 111l198-1c12 0 18 10 14 23Z"/><path class="c2" d="M103 458q5 0 5 5t-5 5H81v10h22q9 0 14-5t5-10-5-11-14-5h-11q-3 0-4-2t-1-3 1-3 5-1h21v-10H92q-9 0-14 5t-5 11 5 10 14 5Z"/><path class="c2" d="M149 478h10v-36h8q4 0 4 4v32h10v-32q0-9-5-14t-14-5h-22v46h9v-36h10Z"/><path class="c2" d="M219 442q5 0 5 4v18q0 5-5 5h-14q-5 0-5-5v0q0-3 1-4t4-1h16v-10h-17q-9 0-14 5t-5 14v0q0 9 5 14t14 5h15q9 0 14-5t5-14v-18q0-9-5-14t-14-5h-25v10Z"/><path class="c2" d="M253 446q0-4 5-4h6v-10h-6q-9 0-14 5t-5 14v32h10Z"/><polygon class="c2" points="273 442 277 442 277 478 286 478 286 442 294 442 294 432 286 432 286 414 277 414 277 432 273 432"/><path class="c2" d="M319 471q-4 0-6-2t-2-6v-19q0-4 2-6t6-2h21v-7h-21q-9 0-13 4t-4 13v19q0 9 4 13t13 4h21v-7Z"/><path class="c2" d="M392 446q0-9-4-13t-13-4h-22v-16h-7v65h7v-39h22q4 0 6 2t2 6v31h7Z"/><path class="c2" d="M403 465q0 9 5 13t13 4h16q9 0 13-4t4-13v-19q0-9-4-13t-13-4h-16q-9 0-13 4t-4 13Zm13 6q-4 0-6-2t-2-6v-19q0-4 2-6t6-2h16q4 0 6 2t2 6v19q0 4-2 6t-6 2Z"/><path class="c2" d="M458 478h7v-46h-7Zm-1-56h9v-9h-9Z"/><path class="c2" d="M487 471q-4 0-6-2t-2-6v-19q0-4 2-6t6-2h21v-7h-21q-9 0-13 4t-4 13v19q0 9 4 13t13 4h21v-7Z"/><path class="c2" d="M531 471q-4 0-6-2t-2-6v-19q0-4 2-6t6-2h16q4 0 6 2t2 6v1q0 4-2 6t-6 2h-18v7h17q9 0 13-4t4-13v-1q0-9-4-13t-13-4h-16q-9 0-13 4t-4 13v19q0 9 4 13t13 4h25v-7Z"/><circle class="c3" cx="320" cy="318" r="300"/></svg>
 SVGEOF
 
-# Final
+echo "✅"
+
+# ═══════════════════════════════════════
+# 8. FINAL
+# ═══════════════════════════════════════
+echo "[8/8] Finalizar"
 chown -R www-data:www-data /var/www/gestao-eventos
 chmod -R 775 /var/www/gestao-eventos/storage /var/www/gestao-eventos/bootstrap/cache
 php artisan optimize:clear
@@ -473,13 +357,11 @@ echo "╔═══════════════════════�
 echo "║  ✅ INSTALAÇÃO CONCLUÍDA!        ║"
 echo "╚══════════════════════════════════╝"
 echo "  🌐 http://${IP}/admin/login"
-echo "  🧮 http://${IP}/led"
-echo "  📅 http://${IP}/admin/escala-tecnicos"
-echo "  👤 ${ADMIN_EMAIL} / ${ADMIN_PASS}"
+echo "  👤 admin@admin.com / Admin123!"
 echo "  📊 HTTP: ${S}"
 echo ""
 echo "  📋 MENUS:"
 echo "  🏠 Dashboard"
-echo "  📦 Logística: Departamentos | Equipamentos | Guias de Transporte | Reparações | Escala de Técnicos"
+echo "  📦 Logística: Departamentos | Equipamentos | Guias Transporte | Reparações | Escala Técnicos"
 echo "  💰 Comercial: Orçamentos | Entidades | LED Calculator"
 echo "  👥 Administração: Colaboradores | Funções | Utilizadores"
